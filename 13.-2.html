@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucide SVG 图标</title>
+    <script src="cdn/lucide.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+        }
+        .icon-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        .icon-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        .icon-card svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 15px;
+            color: #11998e;
+        }
+        .icon-card .icon-name {
+            color: #666;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Lucide SVG 图标</h1>
+        <div class="icon-grid" id="iconGrid"></div>
+    </div>
+
+    <script>
+        const icons = [
+            { name: '首页', icon: 'home' },
+            { name: '用户', icon: 'user' },
+            { name: '设置', icon: 'settings' },
+            { name: '搜索', icon: 'search' },
+            { name: '邮件', icon: 'mail' },
+            { name: '通知', icon: 'bell' },
+            { name: '相机', icon: 'camera' },
+            { name: '音乐', icon: 'music' },
+            { name: '图片', icon: 'image' },
+            { name: '视频', icon: 'video' },
+            { name: '文件', icon: 'file' },
+            { name: '文件夹', icon: 'folder' },
+            { name: '云', icon: 'cloud' },
+            { name: '上传', icon: 'upload' },
+            { name: '下载', icon: 'download' },
+            { name: '链接', icon: 'link' },
+            { name: '锁', icon: 'lock' },
+            { name: '解锁', icon: 'unlock' },
+            { name: '垃圾桶', icon: 'trash' },
+            { name: '编辑', icon: 'edit' },
+            { name: '保存', icon: 'save' },
+            { name: '分享', icon: 'share' },
+            { name: '打印', icon: 'printer' },
+            { name: '购物车', icon: 'shopping-cart' },
+            { name: '心形', icon: 'heart' }
+        ];
+
+        const iconGrid = document.getElementById('iconGrid');
+
+        icons.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'icon-card';
+
+            const iconElement = document.createElement('div');
+            lucide.createIcons({
+                nodes: [{
+                    tagName: 'i',
+                    attrs: { 'data-lucide': item.icon },
+                    children: []
+                }]
+            });
+
+            const svgIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svgIcon.setAttribute('viewBox', '0 0 24 24');
+            svgIcon.setAttribute('fill', 'none');
+            svgIcon.setAttribute('stroke', 'currentColor');
+            svgIcon.setAttribute('stroke-width', '2');
+            svgIcon.setAttribute('stroke-linecap', 'round');
+            svgIcon.setAttribute('stroke-linejoin', 'round');
+
+            const iconSvg = lucide.icons[item.icon];
+            if (iconSvg) {
+                svgIcon.innerHTML = iconSvg.innerHTML;
+            }
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'icon-name';
+            nameSpan.textContent = item.name;
+
+            card.appendChild(svgIcon);
+            card.appendChild(nameSpan);
+            iconGrid.appendChild(card);
+        });
+    </script>
+</body>
+</html>
