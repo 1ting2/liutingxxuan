@@ -1,36 +1,191 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1018 刘庭轩</title>
+<meta charset="UTF-8">
+<title>音乐手机 - 刘庭轩</title>
+<link rel="stylesheet" href="font/iconfont.css">
+<style>
+  body {
+    font-family: "宋体", SimSun, serif;
+    background: #eaeaea;
+    margin: 0;
+    padding: 20px;
+  }
+  .card {
+    width: 380px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  /* 头部：标题 + 标签页 */
+  .head {
+    display: flex;
+    align-items: flex-end;
+    border-bottom: 1px solid #ccc;
+    background: #fff;
+  }
+  .logo {
+    font-family: "微软雅黑", sans-serif;
+    font-size: 19px;
+    font-weight: bold;
+    font-style: italic;
+    color: #0066cc;
+    padding: 10px 16px 8px;
+    white-space: nowrap;
+  }
+  .logo i {
+    font-size: 22px;
+    color: #e60012;
+    font-style: normal;
+    margin-right: 2px;
+    vertical-align: -2px;
+  }
+  .tabs {
+    display: flex;
+    margin-left: auto;
+    align-items: flex-end;
+  }
+  .tab {
+    font-size: 13px;
+    color: #333;
+    padding: 7px 16px;
+    cursor: pointer;
+    background: #f7f7f7;
+    border: 1px solid #ddd;
+    border-bottom: none;
+    margin-left: -1px;
+    border-radius: 3px 3px 0 0;
+  }
+  .tab.active {
+    background: #fff;
+    font-weight: bold;
+    color: #0066cc;
+    border-top: 2px solid #0066cc;
+    border-bottom: 1px solid #fff;
+    margin-bottom: -1px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 列表 */
+  .list {
+    padding: 10px 12px 8px;
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    padding: 5px 0;
+    font-size: 13px;
+    line-height: 20px;
+  }
+  .row::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    background: #e60012;
+    margin-right: 7px;
+    flex-shrink: 0;
+  }
+  .row a {
+    color: #0066cc;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .row a:hover { text-decoration: underline; }
+  .row .date {
+    margin-left: auto;
+    color: #999;
+    font-size: 12px;
+    padding-left: 10px;
+    flex-shrink: 0;
+  }
+</style>
 </head>
-<br>
-    <h2>HTML元素：开始标签+内容+结束标记</h2>
-    <h3>内容与样式相分离</h3>
-    <h4>山居秋暝</h4>
-    空山新雨来<br>
-    天气晚来秋<br/>
-    <p>明月松间照</p>
-    <p> 清泉石上流</p>
-    <h4>9.3阅兵展示的武器列表</h4>
-    <ul>
-        <li>东风</li>
-        <li>鹰击</li>
-        <li>长缨</li>
-        <li>巨浪</li>
-        <li>霹雳</li>
-    </ul>
-    <!--区域，块 -->
-    <!--注释：ctrl + / -->
-    <div style="background-color: #12abcd;width:400px;height: 200px;">
-   
-    盒子
-    <div>
-    <span style="color: aliceblue;;font-size: 100px;">刘</span>
-    <span style="color: black;font-size: 100px;">庭</span>
-    <span style="color: blue;font-size: 100px;">轩</span>
-    </div>
+<body>
+
+<div class="card">
+  <div class="head">
+    <div class="logo"><i class="iconfont icon-redianhuodong"></i>音乐手机</div>
+    <div class="tabs" id="tabs"></div>
+  </div>
+  <div class="list" id="list"></div>
 </div>
+
+<script>
+  // 标签页及对应数据
+  var data = {
+    '行情': [
+      ['音乐强机苹果iPhone 5s价格稳定', '12/19'],
+      ['高性能双四核音乐机 魅族MX3低价热卖', '12/19'],
+      ['音乐品质最出色 vivo X3促销2199', '12/12'],
+      ['时尚音乐手机 vivo Xplay济南2798元', '11/27'],
+      ['好音乐好拍照 OPPO Find5今报价2580元', '08/27'],
+      ['1.5GHz四核1080p OPPO Find 5降价热卖', '07/30'],
+      ['彩色呼吸带双核机 索尼M35h促销2299', '06/08'],
+      ['1.7GHz四核1080p屏 vivo Xplay热卖中', '06/07']
+    ],
+    '导购': [
+      ['年末换机季 热门音乐手机全搜罗', '12/18'],
+      ['Hi-Fi音质之选 vivo X3S值得入手', '12/10'],
+      ['大屏影音利器 各价位音乐手机推荐', '11/20'],
+      ['学生党最爱 千元内音乐手机导购', '10/15'],
+      ['不只是听歌 全能型音乐手机盘点', '09/08']
+    ],
+    '新品': [
+      ['vivo Xplay3S发布 2K屏+顶级Hi-Fi', '12/18'],
+      ['魅族MX3银翼版开卖 售价2199元', '12/05'],
+      ['OPPO N1旋转摄像头新机亮相', '11/25'],
+      ['苹果iPhone 5c多彩版正式上市', '09/20']
+    ],
+    '评测': [
+      ['Hi-Fi旗舰对决 vivo X3对比MX3', '12/16'],
+      ['音质实测 OPPO Find5音频专项评测', '11/30'],
+      ['音乐播放续航横评 8款热门机比拼', '10/22'],
+      ['索尼M35h Walkman音质体验', '08/15']
+    ]
+  };
+
+  var tabsEl = document.getElementById('tabs');
+  var listEl = document.getElementById('list');
+  var names = Object.keys(data);
+
+  function renderList(name) {
+    listEl.innerHTML = '';
+    data[name].forEach(function (item) {
+      var row = document.createElement('div');
+      row.className = 'row';
+      var a = document.createElement('a');
+      a.href = 'javascript:;';
+      a.textContent = item[0];
+      var date = document.createElement('span');
+      date.className = 'date';
+      date.textContent = '(' + item[1] + ')';
+      row.appendChild(a);
+      row.appendChild(date);
+      listEl.appendChild(row);
+    });
+  }
+
+  function setActive(name) {
+    tabsEl.querySelectorAll('.tab').forEach(function (t) {
+      t.classList.toggle('active', t.textContent === name);
+    });
+    renderList(name);
+  }
+
+  names.forEach(function (name) {
+    var tab = document.createElement('div');
+    tab.className = 'tab';
+    tab.textContent = name;
+    tab.onclick = function () { setActive(name); };
+    tabsEl.appendChild(tab);
+  });
+
+  setActive('行情');
+</script>
 </body>
 </html>
