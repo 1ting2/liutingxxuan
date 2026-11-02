@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>商品详情 - 刘庭轩</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "微软雅黑", "Microsoft YaHei", sans-serif;
+    background: #f4f5f7;
+    color: #2c3e50;
+    padding: 24px;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+
+  /* ============ 页头 ============ */
+  .page-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .page-head h1 { font-size: 24px; color: #1f2d3d; letter-spacing: 1px; }
+  .page-head h1::after {
+    content: "detail";
+    display: inline-block;
+    margin-left: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #4a7ee8;
+    color: #fff;
+    font-size: 12px;
+    letter-spacing: 0;
+    vertical-align: middle;
+  }
+  .back {
+    font-size: 14px;
+    color: #4a7ee8;
+    text-decoration: none;
+  }
+  .back:hover { text-decoration: underline; }
+  .page-head .right { display: flex; align-items: center; gap: 16px; }
+  .page-head .author { font-size: 14px; color: #8795a5; }
+
+  .api-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 14px;
+    font-size: 12px;
+    color: #a6b1bd;
+    font-family: Consolas, monospace;
+  }
+  .api-bar .btn {
+    margin-left: auto;
+    font-family: "微软雅黑", sans-serif;
+  }
+  .btn {
+    height: 32px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 5px;
+    background: #ff7a45;
+    color: #fff;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn:hover { background: #ff5c1f; }
+  .btn:disabled { background: #f0b39c; cursor: not-allowed; }
+
+  /* ============ 主体布局 ============ */
+  .main {
+    display: grid;
+    grid-template-columns: 460px 1fr;
+    gap: 18px;
+  }
+  @media (max-width: 900px) { .main { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(30, 45, 60, .07);
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    height: 46px;
+    padding: 0 16px;
+    border-bottom: 1px solid #eef0f3;
+    background: #fafbfc;
+  }
+  .panel-head .dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: #ff5f57; margin-right: 6px;
+  }
+  .panel-head .dot:nth-child(2) { background: #febc2e; }
+  .panel-head .dot:nth-child(3) { background: #28c840; margin-right: 14px; }
+  .panel-head .title { font-size: 14px; font-weight: bold; color: #34495e; }
+
+  /* ============ 图片区 ============ */
+  .gallery { padding: 16px; }
+  .gallery .main-img {
+    height: 380px;
+    background: #f7f9fb;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .gallery .main-img img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: opacity .2s;
+  }
+  .gallery .thumbs {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .gallery .thumbs img {
+    width: 66px;
+    height: 66px;
+    padding: 4px;
+    border: 2px solid transparent;
+    border-radius: 5px;
+    background: #f7f9fb;
+    object-fit: contain;
+    cursor: pointer;
+    transition: border-color .15s;
+  }
+  .gallery .thumbs img:hover { border-color: #ffc1a8; }
+  .gallery .thumbs img.active { border-color: #ff7a45; }
+
+  /* ============ 信息区 ============ */
+  .info { padding: 16px 18px 18px; }
+  .info .title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #1f2d3d;
+    line-height: 28px;
+  }
+  .info .sub {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0 12px;
+    font-size: 12px;
+    color: #8795a5;
+  }
+  .info .sub .cat {
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: #eef4ff;
+    color: #4a7ee8;
+  }
+  .info .sub .star { color: #ff9f1c; font-size: 14px; }
+
+  .price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 6px;
+    background: #fff7f3;
+  }
+  .price-row .price { color: #ff5c1f; font-size: 30px; font-weight: bold; }
+  .price-row .price small { font-size: 15px; }
+  .price-row .origin { color: #b5bfc9; font-size: 13px; text-decoration: line-through; }
+  .price-row .off {
+    margin-left: auto;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: #ffe2d6;
+    color: #ff5c1f;
+    font-size: 12px;
+  }
+
+  .info-list { margin-top: 8px; }
+  .info-row {
+    display: flex;
+    padding: 9px 0;
+    border-bottom: 1px solid #f0f2f5;
+    font-size: 13px;
+    line-height: 20px;
+  }
+  .info-row:last-child { border-bottom: 0; }
+  .info-row .label { width: 92px; flex: none; color: #8795a5; }
+  .info-row .value { color: #1f2d3d; word-break: break-all; }
+  .stock-ok { color: #1fa353; font-weight: bold; }
+  .stock-low { color: #e34d4d; font-weight: bold; }
+
+  /* ============ 描述 / 标签 / JSON ============ */
+  .section {
+    margin-top: 18px;
+  }
+  .section .panel { padding: 16px 18px; }
+  .desc {
+    font-size: 14px;
+    line-height: 24px;
+    color: #55657a;
+  }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tags span {
+    padding: 3px 10px;
+    border-radius: 12px;
+    background: #f1f5ff;
+    color: #5b7fc4;
+    font-size: 12px;
+  }
+
+  .code-box {
+    max-height: 300px;
+    overflow: auto;
+    padding: 14px 16px;
+    background: #282c34;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 13px;
+    line-height: 21px;
+  }
+  .code-box pre { color: #abb2bf; white-space: pre-wrap; word-break: break-all; }
+  .k { color: #e06c75; }
+  .s { color: #98c379; }
+  .n { color: #d19a66; }
+  .b { color: #c678dd; }
+  .p { color: #abb2bf; }
+
+  /* ============ 加载 / 错误 ============ */
+  .loading-box {
+    padding: 40px 20px;
+    text-align: center;
+    color: #8795a5;
+    font-size: 14px;
+  }
+  .spinner {
+    width: 34px; height: 34px;
+    margin: 0 auto 12px;
+    border: 3px solid #e6ebf1;
+    border-top-color: #4a7ee8;
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-box {
+    display: none;
+    padding: 60px 20px;
+    text-align: center;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(30, 45, 60, .07);
+    color: #e34d4d;
+    font-size: 14px;
+  }
+  .error-box.show { display: block; }
+  .error-box p { margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="page-head">
+    <h1>商品详情</h1>
+    <div class="right">
+      <span class="author">刘庭轩</span>
+      <a class="back" href="17-3.html">← 返回列表</a>
+    </div>
+  </div>
+
+  <div class="api-bar">
+    <span>GET dummyjson.com/products/<strong id="apiId">1</strong></span>
+    <button class="btn" id="btnReload">重新加载</button>
+  </div>
+
+  <!-- 正常内容 -->
+  <div id="content" style="display:none;">
+
+    <div class="main">
+      <!-- 左：图片 -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="title">商品图片</span>
+        </div>
+        <div class="gallery">
+          <div class="main-img">
+            <img id="mainImg" alt="商品主图">
+          </div>
+          <div class="thumbs" id="thumbs"></div>
+        </div>
+      </div>
+
+      <!-- 右：基础信息 -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="title">基础信息</span>
+        </div>
+        <div class="info">
+          <div class="title" id="title">-</div>
+          <div class="sub">
+            <span class="cat" id="category">-</span>
+            <span class="star" id="star">-</span>
+            <span id="rating">-</span>
+          </div>
+
+          <div class="price-row">
+            <span class="price"><small>¥</small><span id="price">-</span></span>
+            <span class="origin" id="origin">-</span>
+            <span class="off" id="off">-</span>
+          </div>
+
+          <div class="info-list" id="infoList"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section panel">
+      <div class="panel-head">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="title">商品描述</span>
+      </div>
+      <div class="desc" id="desc">-</div>
+      <div class="tags" id="tags" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="section panel">
+      <div class="panel-head">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="title">接口原始 JSON</span>
+      </div>
+      <div class="code-box">
+        <pre id="jsonView">-</pre>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 加载 -->
+  <div class="panel" id="loadingBox">
+    <div class="loading-box">
+      <div class="spinner"></div>
+      正在请求商品详情…
+    </div>
+  </div>
+
+  <!-- 错误 -->
+  <div class="error-box" id="errorBox">
+    <p id="errorText">详情加载失败，请稍后重试</p>
+    <button class="btn" id="btnRetry">重新请求</button>
+  </div>
+
+</div>
+
+<script>
+  /* ---------- 1. 从地址栏取商品 ID，缺省为 1 ---------- */
+  var params = new URLSearchParams(location.search);
+  var rawId = params.get('id');
+  var id = parseInt(rawId, 10);
+
+  // 非法 ID（空、非数字、小于 1）统一回退到 1
+  if (!id || id < 1) {
+    id = 1;
+  }
+
+  var API = 'https://dummyjson.com/products/' + id;
+
+  var content = document.getElementById('content');
+  var loadingBox = document.getElementById('loadingBox');
+  var errorBox = document.getElementById('errorBox');
+  var errorText = document.getElementById('errorText');
+  var btnReload = document.getElementById('btnReload');
+  var btnRetry = document.getElementById('btnRetry');
+
+  document.getElementById('apiId').textContent = id;
+  document.title = '商品详情 #' + id + ' - 刘庭轩';
+
+  /* ---------- 2. 工具函数 ---------- */
+  function esc(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function stars(rate) {
+    var full = Math.round(rate);
+    var s = '';
+    for (var i = 0; i < 5; i++) {
+      s += i < full ? '★' : '☆';
+    }
+    return s;
+  }
+
+  function highlight(text) {
+    var safe = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    return safe.replace(
+      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?|[{}\[\],:])/g,
+      function (m) {
+        var cls = 'n';
+        if (/^"/.test(m)) {
+          cls = /:$/.test(m) ? 'k' : 's';
+        } else if (/true|false|null/.test(m)) {
+          cls = 'b';
+        } else if (/^[{}\[\],:]$/.test(m)) {
+          cls = 'p';
+        }
+        return '<span class="' + cls + '">' + m + '</span>';
+      }
+    );
+  }
+
+  /* ---------- 3. 渲染图片画廊 ---------- */
+  function renderGallery(p) {
+    var images = p.images && p.images.length ? p.images : [p.thumbnail];
+    var mainImg = document.getElementById('mainImg');
+    var thumbs = document.getElementById('thumbs');
+
+    mainImg.src = images[0];
+    mainImg.alt = p.title;
+    mainImg.style.cursor = 'zoom-in';
+
+    var html = '';
+    images.forEach(function (src, i) {
+      html +=
+        '<img src="' + esc(src) + '" alt="' + esc(p.title) + ' 图片' + (i + 1) +
+        '" class="' + (i === 0 ? 'active' : '') + '" data-src="' + esc(src) + '">';
+    });
+    thumbs.innerHTML = html;
+
+    // 点击缩略图切换主图（用 onclick 避免重复请求时绑定多次）
+    thumbs.onclick = function (e) {
+      var img = e.target;
+      if (img.tagName !== 'IMG') return;
+
+      mainImg.src = img.getAttribute('data-src');
+      Array.prototype.forEach.call(thumbs.querySelectorAll('img'), function (t) {
+        t.classList.remove('active');
+      });
+      img.classList.add('active');
+    };
+
+    // 点击主图在新窗口查看原图
+    mainImg.onclick = function () {
+      window.open(mainImg.src, '_blank');
+    };
+  }
+
+  /* ---------- 4. 渲染基础信息 ---------- */
+  function renderInfo(p) {
+    document.getElementById('title').textContent = p.title;
+    document.getElementById('category').textContent = p.category;
+    document.getElementById('star').textContent = stars(p.rating);
+    document.getElementById('rating').textContent = p.rating.toFixed(1) + ' 分';
+
+    document.getElementById('price').textContent = p.price.toFixed(2);
+    document.getElementById('origin').textContent =
+      '¥' + (p.price / (1 - p.discountPercentage / 100)).toFixed(2);
+    document.getElementById('off').textContent =
+      '立减 ' + p.discountPercentage.toFixed(1) + '%';
+
+    var rows = [
+      ['品牌', p.brand || '无'],
+      ['商品编号', p.sku],
+      ['库存', '<span class="' + (p.stock > 10 ? 'stock-ok' : 'stock-low') + '">' +
+        p.stock + ' 件</span>'],
+      ['重量', p.weight + ' kg'],
+      ['尺寸', p.dimensions.width + ' × ' + p.dimensions.height + ' × ' +
+        p.dimensions.depth + ' cm'],
+      ['保修', p.warrantyInformation],
+      ['配送', p.shippingInformation],
+      ['退换', p.returnPolicy],
+      ['起订量', p.minimumOrderQuantity + ' 件']
+    ];
+
+    var html = '';
+    rows.forEach(function (r) {
+      html +=
+        '<div class="info-row">' +
+          '<span class="label">' + r[0] + '</span>' +
+          '<span class="value">' + r[1] + '</span>' +
+        '</div>';
+    });
+    document.getElementById('infoList').innerHTML = html;
+  }
+
+  /* ---------- 5. 渲染描述与标签 ---------- */
+  function renderDesc(p) {
+    document.getElementById('desc').textContent = p.description;
+
+    var tags = p.tags || [];
+    var html = '';
+    tags.forEach(function (t) {
+      html += '<span>' + esc(t) + '</span>';
+    });
+    document.getElementById('tags').innerHTML = html;
+  }
+
+  /* ---------- 6. 用 fetch 获取详情 ---------- */
+  function loadDetail() {
+    loadingBox.style.display = 'block';
+    content.style.display = 'none';
+    errorBox.classList.remove('show');
+    btnReload.disabled = true;
+    var start = Date.now();
+
+    fetch(API)
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function (p) {
+        renderGallery(p);
+        renderInfo(p);
+        renderDesc(p);
+        document.getElementById('jsonView').innerHTML =
+          highlight(JSON.stringify(p, null, 2));
+
+        loadingBox.style.display = 'none';
+        content.style.display = 'block';
+        btnReload.disabled = false;
+        console.log('详情接口耗时 ' + (Date.now() - start) + ' ms，返回：', p);
+      })
+      .catch(function (err) {
+        console.error('详情请求失败：', err);
+        loadingBox.style.display = 'none';
+        errorBox.classList.add('show');
+        errorText.textContent = '详情加载失败：' + err.message;
+        btnReload.disabled = false;
+      });
+  }
+
+  /* ---------- 7. 事件与初始化 ---------- */
+  btnReload.addEventListener('click', loadDetail);
+  btnRetry.addEventListener('click', loadDetail);
+
+  loadDetail();
+</script>
+</body>
+</html>

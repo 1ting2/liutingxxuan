@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>商品列表 - 刘庭轩</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "微软雅黑", "Microsoft YaHei", sans-serif;
+    background: #f4f5f7;
+    color: #2c3e50;
+    padding: 24px;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+
+  /* ============ 页头 ============ */
+  .page-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .page-head h1 { font-size: 24px; color: #1f2d3d; letter-spacing: 1px; }
+  .page-head h1::after {
+    content: "fetch";
+    display: inline-block;
+    margin-left: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #4a7ee8;
+    color: #fff;
+    font-size: 12px;
+    letter-spacing: 0;
+    vertical-align: middle;
+  }
+  .page-head .author { font-size: 14px; color: #8795a5; }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: #8795a5;
+  }
+  .toolbar strong { color: #ff5c1f; }
+  .toolbar .api-url {
+    margin-left: auto;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    color: #a6b1bd;
+  }
+  .btn {
+    height: 32px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 5px;
+    background: #ff7a45;
+    color: #fff;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn:hover { background: #ff5c1f; }
+  .btn:disabled { background: #f0b39c; cursor: not-allowed; }
+
+  /* ============ 商品网格 ============ */
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+  @media (max-width: 900px) { .product-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px) { .product-grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(30, 45, 60, .07);
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform .18s, box-shadow .18s;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 22px rgba(30, 45, 60, .13);
+  }
+  .card .thumb {
+    position: relative;
+    height: 160px;
+    background: #f7f9fb;
+    overflow: hidden;
+  }
+  .card .thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform .3s;
+  }
+  .card:hover .thumb img { transform: scale(1.06); }
+  .card .cat {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: rgba(31, 45, 61, .78);
+    color: #fff;
+    font-size: 12px;
+  }
+  .card .body { padding: 12px 14px 14px; }
+  .card .name {
+    height: 40px;
+    font-size: 15px;
+    font-weight: bold;
+    line-height: 20px;
+    color: #1f2d3d;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card .row {
+    display: flex;
+    align-items: baseline;
+    margin: 8px 0 6px;
+  }
+  .card .price { color: #ff5c1f; font-size: 20px; font-weight: bold; }
+  .card .price small { font-size: 13px; }
+  .card .origin {
+    margin-left: 6px;
+    color: #b5bfc9;
+    font-size: 12px;
+    text-decoration: line-through;
+  }
+  .card .meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #8795a5;
+  }
+  .card .star { color: #ff9f1c; }
+  .card .more {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #f2f4f7;
+    font-size: 12px;
+    color: #4a7ee8;
+    text-align: right;
+  }
+
+  /* ============ 加载骨架 ============ */
+  .skeleton {
+    height: 300px;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(30, 45, 60, .07);
+    overflow: hidden;
+  }
+  .skeleton .bar {
+    background: linear-gradient(90deg, #eef1f5 25%, #f7f9fb 37%, #eef1f5 63%);
+    background-size: 400% 100%;
+    animation: shimmer 1.2s infinite;
+  }
+  .skeleton .pic { height: 160px; }
+  .skeleton .line { height: 14px; margin: 14px; border-radius: 3px; }
+  .skeleton .line.short { width: 45%; }
+  @keyframes shimmer {
+    from { background-position: 100% 0; }
+    to { background-position: 0 0; }
+  }
+
+  /* ============ 错误提示 ============ */
+  .error-box {
+    display: none;
+    padding: 60px 20px;
+    text-align: center;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(30, 45, 60, .07);
+    color: #e34d4d;
+    font-size: 14px;
+  }
+  .error-box.show { display: block; }
+  .error-box p { margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="page-head">
+    <h1>商品列表</h1>
+    <span class="author">刘庭轩</span>
+  </div>
+
+  <div class="toolbar">
+    <span>共 <strong id="total">-</strong> 件商品</span>
+    <button class="btn" id="btnReload">重新加载</button>
+    <span class="api-url">GET dummyjson.com/products?limit=8</span>
+  </div>
+
+  <div class="product-grid" id="grid"></div>
+
+  <div class="error-box" id="errorBox">
+    <p id="errorText">列表加载失败，请稍后重试</p>
+    <button class="btn" id="btnRetry">重新请求</button>
+  </div>
+
+</div>
+
+<script>
+  var API = 'https://dummyjson.com/products?limit=8';
+
+  var grid = document.getElementById('grid');
+  var totalEl = document.getElementById('total');
+  var errorBox = document.getElementById('errorBox');
+  var errorText = document.getElementById('errorText');
+  var btnReload = document.getElementById('btnReload');
+  var btnRetry = document.getElementById('btnRetry');
+
+  /* ---------- 加载骨架 ---------- */
+  function showSkeleton() {
+    var html = '';
+    for (var i = 0; i < 8; i++) {
+      html +=
+        '<div class="skeleton">' +
+          '<div class="bar pic"></div>' +
+          '<div class="bar line"></div>' +
+          '<div class="bar line short"></div>' +
+        '</div>';
+    }
+    grid.innerHTML = html;
+    errorBox.classList.remove('show');
+    totalEl.textContent = '-';
+    btnReload.disabled = true;
+  }
+
+  /* ---------- 转义，避免商品标题中的特殊字符破坏结构 ---------- */
+  function esc(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /* ---------- 星级 ---------- */
+  function stars(rate) {
+    var full = Math.round(rate);
+    var s = '';
+    for (var i = 0; i < 5; i++) {
+      s += i < full ? '★' : '☆';
+    }
+    return s;
+  }
+
+  /* ---------- 渲染列表 ---------- */
+  function renderList(products) {
+    var html = '';
+
+    products.forEach(function (p) {
+      var oldPrice = (p.price / (1 - p.discountPercentage / 100)).toFixed(2);
+
+      html +=
+        '<a class="card" href="17-3-detail.html?id=' + p.id + '">' +
+          '<div class="thumb">' +
+            '<span class="cat">' + esc(p.category) + '</span>' +
+            '<img src="' + esc(p.thumbnail) + '" alt="' + esc(p.title) + '">' +
+          '</div>' +
+          '<div class="body">' +
+            '<div class="name">' + esc(p.title) + '</div>' +
+            '<div class="row">' +
+              '<span class="price"><small>¥</small>' + p.price.toFixed(2) + '</span>' +
+              '<span class="origin">¥' + oldPrice + '</span>' +
+            '</div>' +
+            '<div class="meta">' +
+              '<span class="star">' + stars(p.rating) + ' ' + p.rating.toFixed(1) + '</span>' +
+              '<span>库存 ' + p.stock + '</span>' +
+            '</div>' +
+            '<div class="more">查看详情 →</div>' +
+          '</div>' +
+        '</a>';
+    });
+
+    grid.innerHTML = html;
+  }
+
+  /* ---------- 用 fetch 获取列表 ---------- */
+  function loadList() {
+    showSkeleton();
+    var start = Date.now();
+
+    fetch(API)
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data.products || !data.products.length) {
+          throw new Error('接口没有返回商品数据');
+        }
+        totalEl.textContent = data.total;
+        renderList(data.products);
+        btnReload.disabled = false;
+        console.log('列表接口耗时 ' + (Date.now() - start) + ' ms，返回：', data);
+      })
+      .catch(function (err) {
+        console.error('列表请求失败：', err);
+        grid.innerHTML = '';
+        errorBox.classList.add('show');
+        errorText.textContent = '列表加载失败：' + err.message;
+        btnReload.disabled = false;
+      });
+  }
+
+  /* ---------- 事件绑定 ---------- */
+  btnReload.addEventListener('click', loadList);
+  btnRetry.addEventListener('click', loadList);
+
+  /* ---------- 初始化 ---------- */
+  loadList();
+</script>
+</body>
+</html>

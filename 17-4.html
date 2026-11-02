@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>接口测试工具 - 刘庭轩</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "微软雅黑", "Microsoft YaHei", sans-serif;
+    background: #f4f5f7;
+    color: #2c3e50;
+    padding: 20px;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; }
+
+  /* ============ 页头 ============ */
+  .page-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .page-head h1 { font-size: 22px; color: #1f2d3d; letter-spacing: 1px; }
+  .page-head h1::after {
+    content: "fetch";
+    display: inline-block;
+    margin-left: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #4a7ee8;
+    color: #fff;
+    font-size: 12px;
+    letter-spacing: 0;
+    vertical-align: middle;
+  }
+  .page-head .author { font-size: 14px; color: #8795a5; }
+
+  /* ============ 请求条 ============ */
+  .req-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(30, 45, 60, .07);
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .method {
+    height: 38px;
+    padding: 0 10px;
+    border: 1px solid #d8dee6;
+    border-radius: 5px;
+    background: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    color: #1f2d3d;
+    cursor: pointer;
+  }
+  .method[data-m="GET"] { color: #1fa353; }
+  .method[data-m="POST"] { color: #4a7ee8; }
+  .method[data-m="PUT"] { color: #ff9f1c; }
+  .method[data-m="PATCH"] { color: #b86bd6; }
+  .method[data-m="DELETE"] { color: #e34d4d; }
+
+  .url {
+    flex: 1 1 300px;
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid #d8dee6;
+    border-radius: 5px;
+    font-size: 13px;
+    font-family: Consolas, monospace;
+    color: #1f2d3d;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .url:focus { border-color: #4a7ee8; }
+
+  .btn {
+    height: 38px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 5px;
+    background: #ff7a45;
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn:hover { background: #ff5c1f; }
+  .btn:disabled { background: #f0b39c; cursor: not-allowed; }
+  .btn.ghost {
+    background: #fff;
+    border: 1px solid #d8dee6;
+    color: #55657a;
+  }
+  .btn.ghost:hover { border-color: #4a7ee8; color: #4a7ee8; }
+
+  .presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .preset {
+    padding: 5px 12px;
+    border: 1px solid #d8dee6;
+    border-radius: 20px;
+    background: #fff;
+    font-size: 12px;
+    color: #55657a;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .preset:hover { border-color: #4a7ee8; color: #4a7ee8; background: #f4f8ff; }
+  .preset strong { color: #4a7ee8; margin-right: 5px; }
+
+  /* ============ 主网格 ============ */
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(30, 45, 60, .07);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    height: 44px;
+    padding: 0 14px;
+    border-bottom: 1px solid #eef0f3;
+    background: #fafbfc;
+    gap: 14px;
+  }
+  .panel-head .title { font-size: 14px; font-weight: bold; color: #34495e; }
+  .panel-head .toggle {
+    padding: 2px 10px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    font-size: 12px;
+    color: #8795a5;
+    cursor: pointer;
+  }
+  .panel-head .toggle.active {
+    color: #4a7ee8;
+    border-color: #4a7ee8;
+    background: #f4f8ff;
+  }
+  .panel-head .right { margin-left: auto; font-size: 12px; color: #8795a5; }
+
+  /* ============ 编辑器 ============ */
+  textarea.body-editor {
+    flex: 1;
+    min-height: 260px;
+    padding: 14px 16px;
+    border: 0;
+    outline: none;
+    resize: none;
+    background: #fbfcfd;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 13px;
+    line-height: 21px;
+    color: #1f2d3d;
+    tab-size: 2;
+  }
+
+  /* ============ 响应 ============ */
+  .resp-tabs {
+    display: flex;
+    gap: 4px;
+  }
+  .resp-tabs .tab {
+    padding: 6px 14px;
+    border: 0;
+    background: transparent;
+    font-size: 13px;
+    color: #8795a5;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .resp-tabs .tab.active { color: #1f2d3d; border-bottom-color: #ff7a45; }
+  .resp-tabs .badge {
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 12px;
+  }
+  .badge-ok { background: #e8f8ee; color: #1fa353; }
+  .badge-warn { background: #fff4e0; color: #d48806; }
+  .badge-err { background: #fde9e9; color: #e34d4d; }
+  .badge-info { background: #eef4ff; color: #4a7ee8; }
+
+  .resp-body {
+    flex: 1;
+    max-height: 360px;
+    overflow: auto;
+  }
+  .code-box {
+    padding: 14px 16px;
+    background: #282c34;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 13px;
+    line-height: 21px;
+    color: #abb2bf;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .k { color: #e06c75; }
+  .s { color: #98c379; }
+  .n { color: #d19a66; }
+  .b { color: #c678dd; }
+  .p { color: #abb2bf; }
+
+  .error-box {
+    display: none;
+    margin: 14px 16px;
+    padding: 12px 14px;
+    border-radius: 6px;
+    background: #fde9e9;
+    border-left: 4px solid #e34d4d;
+    color: #a02b2b;
+    font-size: 13px;
+    line-height: 20px;
+  }
+  .error-box.show { display: block; }
+  .error-box .err-title { font-weight: bold; margin-bottom: 4px; }
+  .error-box .err-detail { font-family: Consolas, monospace; font-size: 12px; color: #7a1f1f; word-break: break-all; }
+
+  .info-box {
+    display: none;
+    margin: 14px 16px;
+    padding: 12px 14px;
+    border-radius: 6px;
+    background: #eef4ff;
+    border-left: 4px solid #4a7ee8;
+    color: #2b4c8f;
+    font-size: 13px;
+  }
+  .info-box.show { display: block; }
+
+  /* headers */
+  .headers-box { padding: 12px 16px; font-size: 13px; }
+  .h-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .h-row input {
+    flex: 1;
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid #e4e8ed;
+    border-radius: 4px;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    outline: none;
+  }
+  .h-row input:focus { border-color: #4a7ee8; }
+  .h-row .del {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 4px;
+    background: #fff;
+    color: #e34d4d;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  .h-row .del:hover { background: #fde9e9; }
+  .add-header {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #4a7ee8;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+  }
+  .add-header:hover { text-decoration: underline; }
+
+  /* 响应 headers */
+  .rh-list {
+    padding: 14px 16px;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    line-height: 22px;
+    color: #55657a;
+  }
+  .rh-list .k { color: #4a7ee8; }
+
+  /* 状态条 */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #8795a5;
+    border-top: 1px solid #eef0f3;
+    background: #fafbfc;
+  }
+  .status-bar .item { display: flex; align-items: center; gap: 4px; }
+  .status-bar .item strong { color: #1f2d3d; font-weight: bold; }
+
+  /* loading spinner */
+  .resp-box-loading {
+    display: none;
+    padding: 60px 20px;
+    text-align: center;
+    color: #8795a5;
+    font-size: 13px;
+  }
+  .resp-box-loading.show { display: block; }
+  .spinner {
+    width: 32px; height: 32px;
+    margin: 0 auto 10px;
+    border: 3px solid #e6ebf1;
+    border-top-color: #4a7ee8;
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* 历史 */
+  .history {
+    margin-top: 16px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(30, 45, 60, .07);
+    overflow: hidden;
+    display: none;
+  }
+  .history.show { display: block; }
+  .history-head {
+    display: flex;
+    align-items: center;
+    height: 44px;
+    padding: 0 14px;
+    border-bottom: 1px solid #eef0f3;
+    background: #fafbfc;
+  }
+  .history-head .title { font-size: 14px; font-weight: bold; color: #34495e; }
+  .history-head .clear { margin-left: auto; font-size: 12px; color: #e34d4d; background: transparent; border: 0; cursor: pointer; }
+  .history-head .clear:hover { text-decoration: underline; }
+  .history-body { padding: 8px 14px; font-size: 12px; }
+  .history-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f2f4f7;
+    cursor: pointer;
+  }
+  .history-row:last-child { border-bottom: 0; }
+  .history-row:hover { background: #f7f9fb; margin: 0 -14px; padding: 8px 14px; }
+  .history-row .hm {
+    padding: 1px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #fff;
+  }
+  .hm-GET { background: #1fa353; }
+  .hm-POST { background: #4a7ee8; }
+  .hm-PUT { background: #ff9f1c; }
+  .hm-PATCH { background: #b86bd6; }
+  .hm-DELETE { background: #e34d4d; }
+  .history-row .hurl { flex: 1; font-family: Consolas, monospace; color: #34495e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .history-row .hstatus { color: #8795a5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="page-head">
+    <h1>接口测试工具</h1>
+    <span class="author">刘庭轩</span>
+  </div>
+
+  <!-- 预设快速填充 -->
+  <div class="presets" id="presets"></div>
+
+  <!-- 请求条 -->
+  <div class="req-bar">
+    <select class="method" id="method">
+      <option value="GET">GET</option>
+      <option value="POST" selected>POST</option>
+      <option value="PUT">PUT</option>
+      <option value="PATCH">PATCH</option>
+      <option value="DELETE">DELETE</option>
+    </select>
+    <input class="url" id="url" placeholder="https://jsonplaceholder.typicode.com/posts" value="https://jsonplaceholder.typicode.com/posts">
+    <button class="btn" id="btnSend">发送请求</button>
+    <button class="btn ghost" id="btnReset">重置</button>
+  </div>
+
+  <!-- 主网格 -->
+  <div class="grid2">
+
+    <!-- 左侧：请求配置 -->
+    <div class="panel">
+      <div class="panel-head">
+        <span class="title">请求配置</span>
+        <button class="toggle active" data-tab="body">Body</button>
+        <button class="toggle" data-tab="headers">Headers</button>
+        <span class="right">JSON</span>
+      </div>
+
+      <!-- Body -->
+      <div class="tab-body" id="tab-body">
+        <textarea class="body-editor" id="body" placeholder='POST 请求体（JSON 格式），例如：
+{
+  "title": "foo",
+  "body": "bar",
+  "userId": 1
+}'>{
+  "title": "foo",
+  "body": "bar",
+  "userId": 1
+}</textarea>
+      </div>
+
+      <!-- Headers -->
+      <div class="tab-body" id="tab-headers" style="display:none;">
+        <div class="headers-box" id="headersBox">
+          <div class="h-row">
+            <input value="Content-Type" data-key>
+            <input value="application/json" data-val>
+            <button class="del" title="删除">×</button>
+          </div>
+        </div>
+        <button class="add-header" id="addHeader">+ 添加一行</button>
+      </div>
+    </div>
+
+    <!-- 右侧：响应 -->
+    <div class="panel">
+      <div class="panel-head">
+        <span class="title">响应结果</span>
+        <div class="resp-tabs">
+          <button class="tab active" data-rtab="body">Body</button>
+          <button class="tab" data-rtab="headers">Headers</button>
+        </div>
+        <span class="right" id="respBadge"><span class="badge badge-info">等待请求</span></span>
+      </div>
+
+      <div class="resp-body">
+        <!-- 加载 -->
+        <div class="resp-box-loading" id="loading">
+          <div class="spinner"></div>
+          正在请求接口…
+        </div>
+
+        <!-- 错误 -->
+        <div class="error-box" id="errorBox">
+          <div class="err-title" id="errorTitle">请求失败</div>
+          <div class="err-detail" id="errorDetail">-</div>
+        </div>
+
+        <!-- 常见错误提示 -->
+        <div class="info-box" id="infoBox" style="display:none;"></div>
+
+        <!-- 响应 Body -->
+        <div id="rtab-body">
+          <div class="code-box" id="respBody">还没有响应，点击「发送请求」开始。</div>
+        </div>
+        <!-- 响应 Headers -->
+        <div id="rtab-headers" style="display:none;">
+          <div class="rh-list" id="respHeaders">还没有响应。</div>
+        </div>
+      </div>
+
+      <!-- 状态条 -->
+      <div class="status-bar" id="statusBar" style="display:none;">
+        <span class="item">状态码：<strong id="sbStatus">-</strong></span>
+        <span class="item">耗时：<strong id="sbCost">-</strong></span>
+        <span class="item">大小：<strong id="sbSize">-</strong></span>
+        <span class="item">类型：<strong id="sbType">-</strong></span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 历史 -->
+  <div class="history" id="history">
+    <div class="history-head">
+      <span class="title">最近请求（保留最后 10 条）</span>
+      <button class="clear" id="clearHistory">清空记录</button>
+    </div>
+    <div class="history-body" id="historyBody"></div>
+  </div>
+
+</div>
+
+<script>
+  /* ---------- 1. 预设快速填充 ---------- */
+  var PRESETS = [
+    { m: 'GET',    url: 'https://jsonplaceholder.typicode.com/posts/1',
+      body: '' },
+    { m: 'GET',    url: 'https://jsonplaceholder.typicode.com/posts?_limit=3',
+      body: '' },
+    { m: 'POST',   url: 'https://jsonplaceholder.typicode.com/posts',
+      body: '{\n  "title": "foo",\n  "body": "bar",\n  "userId": 1\n}' },
+    { m: 'PUT',    url: 'https://jsonplaceholder.typicode.com/posts/1',
+      body: '{\n  "id": 1,\n  "title": "updated",\n  "body": "new body",\n  "userId": 1\n}' },
+    { m: 'PATCH',  url: 'https://jsonplaceholder.typicode.com/posts/1',
+      body: '{\n  "title": "patched"\n}' },
+    { m: 'DELETE', url: 'https://jsonplaceholder.typicode.com/posts/1',
+      body: '' },
+    { m: 'GET',    url: 'https://dog.ceo/api/breeds/image/random',
+      body: '' },
+    { m: 'GET',    url: 'https://dummyjson.com/products/1',
+      body: '' }
+  ];
+
+  /* ---------- 2. 语法高亮 ---------- */
+  function highlight(text) {
+    var safe = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    return safe.replace(
+      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?|[{}\[\],:])/g,
+      function (m) {
+        var cls = 'n';
+        if (/^"/.test(m)) {
+          cls = /:$/.test(m) ? 'k' : 's';
+        } else if (/true|false|null/.test(m)) {
+          cls = 'b';
+        } else if (/^[{}\[\],:]$/.test(m)) {
+          cls = 'p';
+        }
+        return '<span class="' + cls + '">' + m + '</span>';
+      }
+    );
+  }
+
+  /* ---------- 3. 预设渲染 ---------- */
+  function renderPresets() {
+    var box = document.getElementById('presets');
+    box.innerHTML = PRESETS.map(function (p, i) {
+      return '<span class="preset" data-idx="' + i + '">' +
+        '<strong>' + p.m + '</strong>' + p.url.replace('https://', '') +
+      '</span>';
+    }).join('');
+
+    box.onclick = function (e) {
+      var el = e.target.closest('.preset');
+      if (!el) return;
+      var p = PRESETS[el.getAttribute('data-idx')];
+      document.getElementById('method').value = p.m;
+      document.getElementById('url').value = p.url;
+      document.getElementById('body').value = p.body;
+      syncBodyVisibility();
+    };
+  }
+
+  /* ---------- 4. Body / Headers Tab ---------- */
+  function bindTabs() {
+    document.querySelectorAll('.panel-head .toggle').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.panel-head .toggle').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        var tab = btn.getAttribute('data-tab');
+        document.getElementById('tab-body').style.display   = tab === 'body' ? '' : 'none';
+        document.getElementById('tab-headers').style.display = tab === 'headers' ? '' : 'none';
+      });
+    });
+
+    document.querySelectorAll('.resp-tabs .tab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.resp-tabs .tab').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        var tab = btn.getAttribute('data-rtab');
+        document.getElementById('rtab-body').style.display   = tab === 'body' ? '' : 'none';
+        document.getElementById('rtab-headers').style.display = tab === 'headers' ? '' : 'none';
+      });
+    });
+  }
+
+  /* ---------- 5. Headers 编辑 ---------- */
+  function bindHeaders() {
+    var box = document.getElementById('headersBox');
+
+    box.onclick = function (e) {
+      if (e.target.classList.contains('del')) {
+        if (box.querySelectorAll('.h-row').length > 1) {
+          e.target.parentElement.remove();
+        }
+      }
+    };
+
+    document.getElementById('addHeader').addEventListener('click', function () {
+      var row = document.createElement('div');
+      row.className = 'h-row';
+      row.innerHTML =
+        '<input data-key placeholder="Header 名">' +
+        '<input data-val placeholder="Header 值">' +
+        '<button class="del" title="删除">×</button>';
+      box.appendChild(row);
+    });
+  }
+
+  function readHeaders() {
+    var box = document.getElementById('headersBox');
+    var rows = box.querySelectorAll('.h-row');
+    var headers = {};
+    rows.forEach(function (r) {
+      var k = r.querySelector('[data-key]').value.trim();
+      var v = r.querySelector('[data-val]').value.trim();
+      if (k) headers[k] = v;
+    });
+    return headers;
+  }
+
+  /* ---------- 6. 根据方法决定是否发送 body ---------- */
+  function syncBodyVisibility() {
+    var m = document.getElementById('method').value;
+    var noBody = ['GET', 'HEAD', 'DELETE'].indexOf(m) !== -1;
+    var bodyBox = document.getElementById('tab-body');
+    if (noBody) {
+      bodyBox.style.opacity = '.35';
+      bodyBox.style.pointerEvents = 'none';
+    } else {
+      bodyBox.style.opacity = '1';
+      bodyBox.style.pointerEvents = '';
+    }
+  }
+
+  /* ---------- 7. 状态与错误渲染 ---------- */
+  function setBadge(type, text) {
+    var cls = { ok: 'badge-ok', warn: 'badge-warn', err: 'badge-err', info: 'badge-info' }[type] || 'badge-info';
+    document.getElementById('respBadge').innerHTML =
+      '<span class="badge ' + cls + '">' + text + '</span>';
+  }
+
+  function showLoading() {
+    document.getElementById('loading').classList.add('show');
+    document.getElementById('errorBox').classList.remove('show');
+    document.getElementById('infoBox').style.display = 'none';
+    document.getElementById('statusBar').style.display = 'none';
+    document.getElementById('btnSend').disabled = true;
+    setBadge('info', '请求中…');
+  }
+
+  function hideLoading() {
+    document.getElementById('loading').classList.remove('show');
+    document.getElementById('btnSend').disabled = false;
+  }
+
+  function showHttpError(status, statusText, detail) {
+    var title = 'HTTP ' + status + ' ' + statusText;
+    var detailText = detail || '服务器返回了非 2xx 的状态码。';
+    document.getElementById('errorTitle').textContent = title;
+    document.getElementById('errorDetail').textContent = detailText;
+    document.getElementById('errorBox').classList.add('show');
+    setBadge(status >= 500 ? 'err' : 'warn', 'HTTP ' + status);
+  }
+
+  function showNetError(msg) {
+    document.getElementById('errorTitle').textContent = '网络错误';
+    document.getElementById('errorDetail').textContent = msg;
+    document.getElementById('errorBox').classList.add('show');
+    setBadge('err', '网络失败');
+
+    // 给出常见错误的排查提示
+    var tip = '';
+    if (/Failed to fetch|NetworkError/i.test(msg)) {
+      tip = '可能原因：CORS 跨域、DNS 解析失败、目标服务器未启动、URL 写错、或浏览器把请求拦截了。';
+    } else if (/aborted/i.test(msg)) {
+      tip = '请求被中止，通常是超时或被手动取消。';
+    } else if (/SyntaxError|Unexpected token/i.test(msg)) {
+      tip = '响应体不是合法 JSON，可能是 HTML 错误页或纯文本。';
+    }
+    document.getElementById('infoBox').textContent = tip;
+    document.getElementById('infoBox').style.display = tip ? 'block' : 'none';
+  }
+
+  function showJsonError(raw, msg) {
+    document.getElementById('errorTitle').textContent = 'JSON 解析失败';
+    document.getElementById('errorDetail').textContent = msg + '\n前 200 字符：' + raw.slice(0, 200);
+    document.getElementById('errorBox').classList.add('show');
+    setBadge('warn', '非 JSON 响应');
+  }
+
+  /* ---------- 8. 核心：fetch 发送请求 ---------- */
+  var HISTORY_KEY = '17-4-history';
+
+  function send() {
+    var method = document.getElementById('method').value;
+    var url = document.getElementById('url').value.trim();
+    var bodyEl = document.getElementById('body');
+    var bodyText = bodyEl.value.trim();
+    var headers = readHeaders();
+
+    if (!url) {
+      showNetError('请先填写请求 URL');
+      return;
+    }
+
+    // 校验 JSON body
+    if (['POST', 'PUT', 'PATCH'].indexOf(method) !== -1 && bodyText) {
+      try {
+        JSON.parse(bodyText);
+      } catch (e) {
+        showNetError('Body 不是合法 JSON：' + e.message);
+        hideLoading();
+        return;
+      }
+    }
+
+    showLoading();
+    var start = Date.now();
+
+    // 构造 fetch 选项
+    var init = {
+      method: method,
+      headers: headers
+    };
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].indexOf(method) !== -1 && bodyText) {
+      init.body = bodyText;
+    }
+
+    fetch(url, init)
+      .then(function (res) {
+        var cost = Date.now() - start;
+
+        // 收集响应 headers
+        var rh = {};
+        res.headers.forEach(function (v, k) { rh[k] = v; });
+        document.getElementById('respHeaders').innerHTML = Object.keys(rh).length
+          ? Object.keys(rh).map(function (k) {
+              return '<div><span class="k">' + k + '</span>: ' + rh[k] + '</div>';
+            }).join('')
+          : '（无）';
+
+        // 状态条
+        document.getElementById('statusBar').style.display = 'flex';
+        document.getElementById('sbStatus').textContent = res.status + ' ' + res.statusText;
+        document.getElementById('sbCost').textContent = cost + ' ms';
+        document.getElementById('sbType').textContent = res.headers.get('content-type') || '-';
+
+        if (!res.ok) {
+          // 仍然尝试读一下 body，帮助定位
+          return res.text().then(function (txt) {
+            var size = new Blob([txt]).size;
+            document.getElementById('sbSize').textContent = size + ' B';
+            document.getElementById('respBody').textContent = txt;
+            if (isJsonLike(res.headers.get('content-type'))) {
+              try {
+                document.getElementById('respBody').innerHTML =
+                  highlight(JSON.stringify(JSON.parse(txt), null, 2));
+              } catch (e) { /* 保持 textContent */ }
+            }
+            showHttpError(res.status, res.statusText, txt.slice(0, 300));
+            addHistory(method, url, res.status);
+          });
+        }
+
+        // 正常响应
+        var ct = res.headers.get('content-type') || '';
+        var sizeText = '';
+
+        if (isJsonLike(ct)) {
+          return res.text().then(function (txt) {
+            sizeText = new Blob([txt]).size + ' B';
+            try {
+              var obj = JSON.parse(txt);
+              document.getElementById('respBody').innerHTML =
+                highlight(JSON.stringify(obj, null, 2));
+              document.getElementById('sbSize').textContent = sizeText;
+              setBadge('ok', 'HTTP ' + res.status + ' · OK');
+              document.getElementById('errorBox').classList.remove('show');
+              document.getElementById('infoBox').style.display = 'none';
+              addHistory(method, url, res.status);
+            } catch (e) {
+              document.getElementById('respBody').textContent = txt;
+              document.getElementById('sbSize').textContent = sizeText;
+              showJsonError(txt, e.message);
+              addHistory(method, url, res.status);
+            }
+          });
+        } else {
+          // 非 JSON 响应当纯文本展示
+          return res.text().then(function (txt) {
+            sizeText = new Blob([txt]).size + ' B';
+            document.getElementById('respBody').textContent = txt;
+            document.getElementById('sbSize').textContent = sizeText;
+            setBadge('ok', 'HTTP ' + res.status + ' · OK');
+            document.getElementById('errorBox').classList.remove('show');
+            document.getElementById('infoBox').style.display = 'none';
+            addHistory(method, url, res.status);
+          });
+        }
+      })
+      .catch(function (err) {
+        document.getElementById('statusBar').style.display = 'none';
+        document.getElementById('respBody').textContent = '（没有响应体，fetch 在到达服务器之前就失败了）';
+        showNetError(err.message || String(err));
+        addHistory(method, url, 0);
+      })
+      .then(function () { hideLoading(); });
+  }
+
+  function isJsonLike(ct) {
+    return /json/i.test(ct || '');
+  }
+
+  /* ---------- 9. 历史记录 ---------- */
+  function loadHistory() {
+    try {
+      var raw = localStorage.getItem(HISTORY_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  function saveHistory(list) {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+  }
+
+  function addHistory(method, url, status) {
+    var list = loadHistory();
+    list.unshift({
+      m: method, url: url, s: status, t: Date.now()
+    });
+    list = list.slice(0, 10);
+    saveHistory(list);
+    renderHistory();
+  }
+
+  function renderHistory() {
+    var list = loadHistory();
+    var box = document.getElementById('history');
+    var body = document.getElementById('historyBody');
+
+    if (!list.length) { box.classList.remove('show'); return; }
+    box.classList.add('show');
+
+    body.innerHTML = list.map(function (h) {
+      var statusCls = h.s >= 200 && h.s < 300 ? 'badge-ok' : (h.s === 0 ? 'badge-err' : 'badge-warn');
+      return '<div class="history-row" data-url="' + h.url + '" data-m="' + h.m + '">' +
+        '<span class="hm hm-' + h.m + '">' + h.m + '</span>' +
+        '<span class="hurl">' + h.url + '</span>' +
+        '<span class="hstatus badge ' + statusCls + '">' + (h.s || 'fail') + '</span>' +
+      '</div>';
+    }).join('');
+
+    body.onclick = function (e) {
+      var row = e.target.closest('.history-row');
+      if (!row) return;
+      document.getElementById('method').value = row.getAttribute('data-m');
+      document.getElementById('url').value = row.getAttribute('data-url');
+      syncBodyVisibility();
+      send();
+    };
+  }
+
+  /* ---------- 10. 初始化 ---------- */
+  function bindEvents() {
+    document.getElementById('btnSend').addEventListener('click', send);
+    document.getElementById('btnReset').addEventListener('click', function () {
+      document.getElementById('method').value = 'POST';
+      document.getElementById('url').value = 'https://jsonplaceholder.typicode.com/posts';
+      document.getElementById('body').value = '{\n  "title": "foo",\n  "body": "bar",\n  "userId": 1\n}';
+      syncBodyVisibility();
+    });
+    document.getElementById('clearHistory').addEventListener('click', function () {
+      localStorage.removeItem(HISTORY_KEY);
+      renderHistory();
+    });
+    document.getElementById('method').addEventListener('change', syncBodyVisibility);
+    // Ctrl/Cmd + Enter 快速发送
+    document.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        send();
+      }
+    });
+  }
+
+  renderPresets();
+  bindTabs();
+  bindHeaders();
+  bindEvents();
+  syncBodyVisibility();
+  renderHistory();
+</script>
+</body>
+</html>
